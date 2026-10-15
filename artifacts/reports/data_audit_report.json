@@ -1,0 +1,114 @@
+{
+  "raw_dir": "C:\\Users\\ndt06\\Desktop\\VNDCash\\data\\raw",
+  "target_classes_stats": {
+    "1000": {
+      "folder": "001000",
+      "mapped_label": "1000",
+      "count": 250,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "2000": {
+      "folder": "002000",
+      "mapped_label": "2000",
+      "count": 250,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "5000": {
+      "folder": "005000",
+      "mapped_label": "5000",
+      "count": 154,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "10000": {
+      "folder": "010000",
+      "mapped_label": "10000",
+      "count": 250,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "20000": {
+      "folder": "020000",
+      "mapped_label": "20000",
+      "count": 154,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "50000": {
+      "folder": "050000",
+      "mapped_label": "50000",
+      "count": 154,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "100000": {
+      "folder": "100000",
+      "mapped_label": "100000",
+      "count": 250,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "200000": {
+      "folder": "200000",
+      "mapped_label": "200000",
+      "count": 250,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "500000": {
+      "folder": "500000",
+      "mapped_label": "500000",
+      "count": 250,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    }
+  },
+  "excluded_classes_stats": {
+    "000000": {
+      "folder": "000000",
+      "mapped_label": "000000",
+      "count": 250,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "000200": {
+      "folder": "000200",
+      "mapped_label": "000200",
+      "count": 250,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    },
+    "000500": {
+      "folder": "000500",
+      "mapped_label": "000500",
+      "count": 250,
+      "corrupt_count": 0,
+      "blank_count": 0,
+      "duplicate_count": 0
+    }
+  },
+  "corrupted_images": [],
+  "blank_images": [],
+  "duplicates": [],
+  "total_target_images": 1962,
+  "total_excluded_images": 750,
+  "resolutions": {
+    "192x144": 2712
+  },
+  "color_modes": {
+    "RGB": 2712
+  }
+}

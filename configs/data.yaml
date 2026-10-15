@@ -1,0 +1,98 @@
+# VNDCash Data Configuration
+# Project: XÂY DỰNG ỨNG DỤNG NHẬN DIỆN TIỀN GIẤY VIỆT NAM BẰNG CNN
+# Owner: Thành viên A (Data Engineering & Data Pipeline)
+
+dataset:
+  name: "VNDCash"
+  source: "kagglehub:nguyentrongdai/vietnamese-currency"
+  raw_dir: "data/raw"
+  interim_dir: "data/interim"
+  processed_dir: "data/processed"
+  metadata_csv: "data/metadata/metadata.csv"
+  splits_csv: "data/metadata/splits.csv"
+
+classes:
+  num_classes: 9
+  target_names:
+    - "1000"
+    - "2000"
+    - "5000"
+    - "10000"
+    - "20000"
+    - "50000"
+    - "100000"
+    - "200000"
+    - "500000"
+  
+  folder_mapping:
+    "001000": "1000"
+    "002000": "2000"
+    "005000": "5000"
+    "010000": "10000"
+    "020000": "20000"
+    "050000": "50000"
+    "100000": "100000"
+    "200000": "200000"
+    "500000": "500000"
+
+  label_to_idx:
+    "1000": 0
+    "2000": 1
+    "5000": 2
+    "10000": 3
+    "20000": 4
+    "50000": 5
+    "100000": 6
+    "200000": 7
+    "500000": 8
+
+  idx_to_label:
+    0: "1000"
+    1: "2000"
+    2: "5000"
+    3: "10000"
+    4: "20000"
+    5: "50000"
+    6: "100000"
+    7: "200000"
+    8: "500000"
+
+  excluded_folders:
+    - "000000"  # Background / khac
+    - "000200"  # 200 VND (ngoai pham vi 9 menh gia)
+    - "000500"  # 500 VND (ngoai pham vi 9 menh gia)
+
+split:
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  seed: 42
+  group_by: "note_id"      # Phân nhóm theo tờ tiền để chống rò rỉ dữ liệu (data leakage)
+  stratified: true         # Đảm bảo phân bổ đều tỷ lệ giữa 9 lớp
+  save_physical_splits: false  # Đọc ảnh trực tiếp qua splits.csv để tránh nhân bản dung lượng đĩa
+
+preprocessing:
+  image_size: [224, 224]
+  channels: 3
+  mean: [0.485, 0.456, 0.406]   # ImageNet normalization
+  std: [0.229, 0.224, 0.225]
+
+augmentation:
+  train:
+    horizontal_flip_prob: 0.5
+    rotation_degrees: 15
+    brightness_jitter: 0.2
+    contrast_jitter: 0.2
+    saturation_jitter: 0.2
+    affine_scale: [0.9, 1.1]
+    gaussian_blur_prob: 0.2
+  val:
+    resize_only: true
+  test:
+    resize_only: true
+
+dataloader:
+  batch_size: 32
+  num_workers: 0    # Windows safe default
+  shuffle_train: true
+  pin_memory: true

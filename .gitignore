@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Large archive
+archive.zip
+
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Testing & Caches
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Large datasets & binaries (Tuân thủ quy tắc kiến trúc hệ thống)
+data/raw/
+data/processed/
+data/interim/
+dataset/
+artifacts/checkpoints/*.pt
+artifacts/checkpoints/*.pth
+artifacts/checkpoints/*.h5
+artifacts/models/*.tflite
+artifacts/models/*.onnx
+!data/metadata/*.csv
+*.data
+
+# Temporary files
+*.tmp
+~$*.docx
+
+# Gemini / Antigravity
+.gemini/
+
+# Large binary blobs
+ngtrdaiDataset.data
+
+# Scripts helper (not needed by team)
+scripts/make_notebooks.py
