@@ -42,10 +42,8 @@ htmlcov/
 *.swp
 *.swo
 
-# Large datasets & binaries (Tuân thủ quy tắc kiến trúc hệ thống)
-data/raw/
-data/processed/
-data/interim/
+# Datasets & binaries
+# data/raw/ is now tracked
 dataset/
 artifacts/checkpoints/*.pt
 artifacts/checkpoints/*.pth
@@ -53,6 +51,7 @@ artifacts/checkpoints/*.h5
 artifacts/models/*.tflite
 artifacts/models/*.onnx
 !data/metadata/*.csv
+!**/.gitkeep
 *.data
 
 # Temporary files
