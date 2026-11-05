@@ -1,0 +1,13 @@
+{
+  "model_name": "baseline_cnn",
+  "best_epoch": 3,
+  "best_score": 0.9231732749938965,
+  "monitor": "val_loss",
+  "metrics": {
+    "train_loss": 0.8743504231546769,
+    "train_acc": 0.7679882525697503,
+    "val_loss": 0.9231732749938965,
+    "val_acc": 0.7533333333333333,
+    "lr": 0.001
+  }
+}

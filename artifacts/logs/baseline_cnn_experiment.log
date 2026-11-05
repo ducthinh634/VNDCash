@@ -1,0 +1,23 @@
+[2026-11-05 23:31:04] [INFO] [train]: ======================================================================
+[2026-11-05 23:31:04] [INFO] [train]: STARTING EXPERIMENT: baseline_cnn_experiment
+[2026-11-05 23:31:04] [INFO] [train]: Loaded configuration from: C:\Users\ndt06\Desktop\VNDCash\configs\baseline.yaml
+[2026-11-05 23:31:04] [INFO] [train]: ======================================================================
+[2026-11-05 23:31:04] [INFO] [train]: Random seed initialized to: 42
+[2026-11-05 23:31:04] [INFO] [train]: Compute device selected: cpu
+[2026-11-05 23:31:04] [INFO] [train]: Loading data: config=C:\Users\ndt06\Desktop\VNDCash\configs\data.yaml, batch_size=32
+[2026-11-05 23:31:04] [INFO] [train]: DataLoaders ready: Train batches=43, Val batches=10
+[2026-11-05 23:31:04] [INFO] [train]: Building model 'baseline_cnn' (num_classes=9, in_channels=3)
+[2026-11-05 23:31:04] [INFO] [train]: Model parameters: Total=1,440,297 | Trainable=1,440,297
+[2026-11-05 23:31:04] [INFO] [train]: Computed inverse class weights: [0.8592966198921204, 0.8592966198921204, 1.2814072370529175, 0.8592966198921204, 1.2814072370529175, 1.2814072370529175, 0.8592966198921204, 0.8592966198921204, 0.8592966198921204]
+[2026-11-05 23:31:04] [INFO] [train]: Optimizer: ADAM (lr=0.001, weight_decay=0.0001)
+[2026-11-05 23:31:04] [INFO] [train]: Starting training on device: cpu for 3 epochs
+[2026-11-05 23:32:33] [INFO] [train]: Epoch [01/03] (88.9s) Train Loss: 1.6942 | Train Acc: 44.13% | Val Loss: 1.4555 | Val Acc: 48.00% | LR: 0.001000 [*Best*]
+[2026-11-05 23:33:55] [INFO] [train]: Epoch [02/03] (82.4s) Train Loss: 1.0717 | Train Acc: 68.43% | Val Loss: 1.1279 | Val Acc: 64.67% | LR: 0.001000 [*Best*]
+[2026-11-05 23:35:18] [INFO] [train]: Epoch [03/03] (83.0s) Train Loss: 0.8744 | Train Acc: 76.80% | Val Loss: 0.9232 | Val Acc: 75.33% | LR: 0.001000 [*Best*]
+[2026-11-05 23:35:18] [INFO] [train]: Training completed in 4.24 minutes.
+[2026-11-05 23:35:19] [INFO] [train]: Learning curves saved to: C:\Users\ndt06\Desktop\VNDCash\artifacts\figures\baseline_cnn_experiment_learning_curves.png
+[2026-11-05 23:35:19] [INFO] [train]: ======================================================================
+[2026-11-05 23:35:19] [INFO] [train]: EXPERIMENT COMPLETED SUCCESSFULLY!
+[2026-11-05 23:35:19] [INFO] [train]: Best checkpoint saved at: C:\Users\ndt06\Desktop\VNDCash\artifacts\checkpoints\baseline_cnn_best.pt
+[2026-11-05 23:35:19] [INFO] [train]: Metrics history saved at: C:\Users\ndt06\Desktop\VNDCash\artifacts\logs\baseline_cnn_experiment_history.csv
+[2026-11-05 23:35:19] [INFO] [train]: ======================================================================

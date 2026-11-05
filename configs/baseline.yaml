@@ -1,0 +1,49 @@
+# VNDCash Baseline CNN Configuration
+# Project: XÂY DỰNG ỨNG DỤNG NHẬN DIỆN TIỀN GIẤY VIỆT NAM BẰNG CNN
+# Stack: Stack02 - Custom CNN & Training Engine
+
+experiment:
+  name: "baseline_cnn_experiment"
+  seed: 42
+  device: "auto"     # "auto", "cuda", or "cpu"
+
+model:
+  name: "baseline_cnn"
+  num_classes: 9
+  in_channels: 3
+  dropout: 0.3
+  init_weights: true
+
+data:
+  config_path: "configs/data.yaml"
+  splits_csv: "data/metadata/splits.csv"
+  batch_size: 32
+  num_workers: 0
+
+training:
+  epochs: 15
+  optimizer:
+    name: "adam"
+    lr: 0.001
+    weight_decay: 0.0001
+  scheduler:
+    name: "reduce_lr_on_plateau"
+    mode: "min"
+    factor: 0.5
+    patience: 3
+    min_lr: 0.00001
+  loss:
+    name: "cross_entropy"
+    use_class_weights: true
+    label_smoothing: 0.05
+  early_stopping:
+    patience: 6
+    min_delta: 0.001
+    monitor: "val_loss"
+    mode: "min"
+
+artifacts:
+  checkpoints_dir: "artifacts/checkpoints"
+  logs_dir: "artifacts/logs"
+  figures_dir: "artifacts/figures"
+  save_best_only: true
