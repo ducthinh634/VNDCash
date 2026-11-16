@@ -1,178 +1,169 @@
-# GIAO THỨC DỮ LIỆU & PIPELINE (DATASET PROTOCOL)
-**Dự án**: XÂY DỰNG ỨNG DỤNG NHẬN DIỆN TIỀN GIẤY VIỆT NAM BẰNG CNN (VNDCash)  
-**Mã công việc**: Stack01 - Data Engineering & Data Pipeline  
-**Thành viên phụ trách (Nhóm A)**: Nguyễn Đức Thịnh, Lê Quang Minh Nhật, Trương Tấn  
-**Ngày hoàn thiện**: 15/10/2026  
+# GIAO THỨC DỮ LIỆU & PIPELINE YOLOv11 (DATASET PROTOCOL)
+**Dự án**: XÂY DỰNG HỆ THỐNG NHẬN DIỆN ĐA MỆNH GIÁ TIỀN GIẤY VIỆT NAM BẰNG YOLOv11 (VNDCash)  
+**Mã công việc**: Stack 01 - Data Engineering, Hard-Case Curation & Anti-Leakage Split (`Stack101` - `Stack114`)  
+**Thành viên phụ trách (Nhóm A)**: Nguyễn Đức Thịnh (MSSV: 22696331)  
+**Ngày cập nhật**: 17/11/2026  
+**Trạng thái**: Hoàn thiện 100% (Đã nghiệm thu qua kiểm thử tự động `pytest` và kiểm định độc lập)
 
 ---
 
-## 1. Nguồn gốc dữ liệu & Phạm vi bài toán
+## 1. Bối cảnh chuyển đổi & Nguồn dữ liệu
 
-### 1.1. Nguồn dữ liệu
-Bộ dữ liệu được thu thập và đồng bộ trực tiếp từ KaggleHub:
-```python
-import kagglehub
-path = kagglehub.dataset_download("nguyentrongdai/vietnamese-currency")
+### 1.1. Nâng cấp từ Phân loại đơn mẫu (CNN) sang Nhận diện đa vật thể (YOLOv11)
+- Ban đầu bài toán phân loại đơn mẫu (Classification) chỉ nhận diện 1 tờ tiền trên nền tĩnh, không đáp ứng được thực tế khi người dùng thanh toán hay quét một xấp tiền gồm nhiều mệnh giá cùng lúc.
+- Do đó, dự án nâng cấp toàn diện sang mô hình **YOLOv11 Object Detection**, cho phép định vị (Bounding Box) và phân loại đồng thời nhiều tờ tiền thuộc các mệnh giá khác nhau trong một khung hình duy nhất.
+
+### 1.2. Nguồn gốc dữ liệu
+Bộ dữ liệu được tích hợp và chuẩn hóa từ Roboflow Universe (tác giả Anng - `Vietnamese Currency.v10-v4.yolov11`):
+- **Tổng số ảnh multi-note được chọn lọc**: **1.898 ảnh** lưu trữ tại `data/raw/multi_note/images/` và `data/raw/multi_note/labels/`.
+- **Tổng số Bounding Box chuẩn hóa**: **6.731 nhãn tờ tiền**.
+- **Số lớp nhận diện (nc = 9)**: Đầy đủ 9 mệnh giá tiền giấy Việt Nam lưu hành:
+  `['1000', '10000', '100000', '2000', '20000', '200000', '5000', '50000', '500000']`.
+
+---
+
+## 2. Quy chuẩn Bounding Box & Định dạng Nhãn YOLOv11
+
+### 2.1. Cấu trúc nhãn YOLOv11
+Mỗi file nhãn `.txt` tương ứng với 1 file ảnh có cùng tên, mỗi dòng đại diện cho một tờ tiền:
 ```
-- Dữ liệu gốc bao gồm 12 thư mục với tổng cộng **2.712 ảnh**.
-- Định dạng ảnh gốc: `.png`, kích thước chuẩn `192x144` pixels, hệ màu `RGB`.
+<class_id> <x_center> <y_center> <width> <height>
+```
+Trong đó:
+- `class_id`: Số nguyên từ `0` đến `8`, tương ứng với danh sách lớp theo thứ tự chuẩn:
+  - `0`: 1.000 VND (Cotton)
+  - `1`: 10.000 VND (Polymer)
+  - `2`: 100.000 VND (Polymer)
+  - `3`: 2.000 VND (Cotton)
+  - `4`: 20.000 VND (Polymer)
+  - `5`: 200.000 VND (Polymer)
+  - `6`: 5.000 VND (Cotton)
+  - `7`: 50.000 VND (Polymer)
+  - `8`: 500.000 VND (Polymer)
+- `x_center`, `y_center`: Tọa độ tâm hộp bao chuẩn hóa $\in [0.0, 1.0]$.
+- `width`, `height`: Chiều rộng và chiều cao hộp bao chuẩn hóa $\in (0.0, 1.0]$.
 
-### 1.2. Phạm vi 09 mệnh giá mục tiêu
-Dự án chốt phạm vi nhận diện tự động **09 mệnh giá tiền giấy Việt Nam** đang lưu hành hợp pháp:
-- **Tiền giấy Cotton**: `1.000 VND`, `2.000 VND`, `5.000 VND`
-- **Tiền Polymer**: `10.000 VND`, `20.000 VND`, `50.000 VND`, `100.000 VND`, `200.000 VND`, `500.000 VND`
-- **Quy tắc gán nhãn**: Mặt trước và mặt sau của cùng một tờ tiền đều được quy về cùng một nhãn mệnh giá.
-
-### 1.3. Xử lý các lớp ngoài phạm vi (Excluded Folders)
-Trong dữ liệu gốc từ Kaggle có 3 thư mục không thuộc phạm vi bài toán 9 mệnh giá:
-- `000000` (250 ảnh): Nền / ảnh không phải tiền (Background / Other)
-- `000200` (250 ảnh): Mệnh giá 200 VND (tiền cotton cũ, ít phát hành và lưu thông)
-- `000500` (250 ảnh): Mệnh giá 500 VND (ngoài phạm vi 9 mệnh giá 1k-500k)
-
-> **Quy tắc**: Toàn bộ 750 ảnh từ 3 thư mục này được giữ nguyên trong `data/raw/` nhưng loại khỏi tập huấn luyện 9 lớp chính, có thể dùng làm dữ liệu kiểm thử robustness/out-of-distribution (OOD) sau này.
+### 2.2. Kiểm định và Làm sạch nhãn (`data/annotations/review_needed.csv`)
+Tất cả 6.731 Bounding Box được rà soát tự động thông qua `src/vndcash/data/validation.py`:
+- Phát hiện và xuất báo cáo toàn bộ các file nghi ngờ vào `data/annotations/review_needed.csv`.
+- Sửa triệt để các nhãn bất thường (ví dụ: artifact kích thước $w = 0.0$ do lỗi sinh polygon).
+- **Kết quả nghiệm thu**: 100% tọa độ Bounding Box nằm chính xác trong khoảng $[0.0, 1.0]$, tỷ lệ vi phạm biên hoặc suy biến là **0%**.
 
 ---
 
-## 2. Kết quả kiểm toán dữ liệu (Data Audit)
+## 3. Tiêu chí Hard-Case Curation
 
-Chạy script kiểm toán:
-```bash
-python scripts/inspect_dataset.py
+Hệ thống thiết lập cờ `is_hard_case` trong metadata để phân loại và đảm bảo mô hình được huấn luyện trên các tình huống phức tạp thực tế:
+1. **Mật độ đa tờ tiền (Multi-Note Density)**: Ảnh chứa từ 2 đến 9 tờ tiền xếp chồng, đan xen. Có tới **1.897 / 1.898 ảnh (99.9%)** là ca nhận diện đa tờ tiền.
+2. **Đa mệnh giá đồng thời (Multi-Denomination)**: **1.886 / 1.898 ảnh (99.4%)** chứa từ 2 mệnh giá tiền khác nhau trở lên trong cùng một bối cảnh.
+3. **Che khuất & Góc chụp nghiêng**: Bounding Box bao phủ các tờ tiền bị che khuất một phần (occlusion), bị gập nếp hoặc xoay góc trong phạm vi $0^\circ - 360^\circ$.
+4. **Hộp bao kích thước nhỏ**: Bounding Box có chiều rộng hoặc chiều cao $< 0.15$ (tờ tiền chụp ở khoảng cách xa hoặc bị lấp dưới tờ tiền khác).
+
+---
+
+## 4. Giao thức Chia tập Chống rò rỉ dữ liệu (Anti-Leakage Group Split)
+
+### 4.1. Nguy cơ Rò rỉ Dữ liệu trên Ảnh Tăng cường (Augmented Scenes)
+Trong bộ dữ liệu Roboflow, các ảnh thường được sinh ra từ các cảnh gốc thông qua biến đổi (flip, rotate, color jitter). Nếu chia ngẫu nhiên (random split), các biến thể của cùng một cảnh vật lý sẽ lọt vào cả Train và Test, gây ra hiện tượng **Data Leakage** nghiêm trọng (mô hình ghi nhớ hình nền và hoa văn cụ thể thay vì khái quát hóa mệnh giá).
+
+### 4.2. Giải pháp: Gom cụm theo `note_id` (Physical Base Scene)
+- Trích xuất định danh cảnh gốc `note_id` từ tiền tố tên file (trước đoạn mã hash `.rf.`).
+- Tổng cộng toàn bộ 1.898 ảnh được quy về **1.158 nhóm `note_id` vật lý độc lập**.
+- Thuật toán `stratified_group_split_yolo` thực hiện chia phân tầng theo tỷ lệ chuẩn **70% Train / 15% Val / 15% Test** sao cho tất cả ảnh cùng `note_id` phải nằm trọn vẹn trong **DUY NHẤT một tập**.
+
+### 4.3. Bảng phân chia thực tế (`data/metadata/splits.csv`)
+| Phân vùng | Số lượng ảnh | Tỷ lệ ảnh | Số nhóm `note_id` | Tỷ lệ `note_id` | Tổng Bounding Box | Hard-Case |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Train** | 1.307 | 68.9% | 810 | 69.9% | 4.611 | 1.306 |
+| **Validation** | 295 | 15.5% | 176 | 15.2% | 1.044 | 295 |
+| **Test** | 296 | 15.6% | 172 | 14.9% | 1.076 | 296 |
+| **Tổng cộng** | **1.898** | **100.0%** | **1.158** | **100.0%** | **6.731** | **1.897** |
+
+> **Cam kết Zero Data Leakage**:
+> - Số lượng `note_id` giao thoa giữa Train - Val: **0**
+> - Số lượng `note_id` giao thoa giữa Train - Test: **0**
+> - Số lượng `note_id` giao thoa giữa Val - Test: **0**
+> - Số lượng mã băm MD5 giao thoa giữa các tập: **0**
+
+---
+
+## 5. Thống kê Phân bố Bounding Box theo Mệnh giá
+
+Kết quả kiểm toán chi tiết từ `scripts/inspect_dataset.py` (lưu tại `artifacts/reports/yolo_audit_report.json`):
+
+| Mệnh giá | Số BBox (Train) | Số BBox (Val) | Số BBox (Test) | Tổng BBox | Tỷ lệ toàn tập | Đánh giá |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1.000 VND** | 489 | 107 | 118 | 714 | 10.6% | Cân bằng lý tưởng |
+| **2.000 VND** | 485 | 110 | 120 | 715 | 10.6% | Cân bằng lý tưởng |
+| **5.000 VND** | 480 | 110 | 118 | 708 | 10.5% | Đã bù đắp đủ dữ liệu |
+| **10.000 VND** | 469 | 109 | 117 | 695 | 10.3% | Cân bằng lý tưởng |
+| **20.000 VND** | 500 | 115 | 111 | 726 | 10.8% | Đã bù đắp đủ dữ liệu |
+| **50.000 VND** | 606 | 134 | 141 | 881 | 13.1% | Đã bù đắp đủ dữ liệu |
+| **100.000 VND** | 609 | 139 | 150 | 898 | 13.3% | Đủ mẫu chuẩn |
+| **200.000 VND** | 493 | 115 | 108 | 716 | 10.6% | Cân bằng lý tưởng |
+| **500.000 VND** | 480 | 105 | 93 | 678 | 10.1% | Cân bằng lý tưởng |
+| **Tổng cộng** | **4.611** | **1.044** | **1.076** | **6.731** | **100.0%** | **Không còn mất cân bằng lớp** |
+
+---
+
+## 6. Cấu trúc Bộ dữ liệu Chuẩn Ultralytics YOLOv11
+
+Thư mục `data/processed/yolo_dataset/` được tổ chức đúng cấu trúc chuẩn của Ultralytics, sẵn sàng đưa vào lệnh `yolo train`:
+```
+data/processed/yolo_dataset/
+├── data.yaml
+├── images/
+│   ├── train/  (1.307 ảnh)
+│   ├── val/    (295 ảnh)
+│   └── test/   (296 ảnh)
+└── labels/
+    ├── train/  (1.307 file .txt)
+    ├── val/    (295 file .txt)
+    └── test/   (296 file .txt)
 ```
 
-### Kết quả kiểm tra chất lượng ảnh:
-- **Số ảnh lỗi (Corrupted)**: `0` ảnh.
-- **Số ảnh rỗng/trắng phẳng (Blank / Zero variance)**: `0` ảnh.
-- **Số ảnh trùng lặp nhị phân (Exact MD5 Duplicates)**: `0` ảnh.
-- **Tổng số ảnh thuộc 9 mệnh giá mục tiêu**: **1.962 ảnh**.
-
-### Thống kê và ghi nhận hiện tượng mất cân bằng mẫu:
-| Mệnh giá | Thư mục gốc | Chất liệu | Số lượng ảnh | Tỷ lệ so với lớp chuẩn (250 ảnh) | Đánh giá & Xử lý |
-| :--- | :--- | :--- | :---: | :---: | :--- |
-| **1.000 VND** | `001000` | Cotton | 250 | 100% | Đủ mẫu chuẩn |
-| **2.000 VND** | `002000` | Cotton | 250 | 100% | Đủ mẫu chuẩn |
-| **5.000 VND** | `005000` | Cotton | **154** | **61.6%** | **Thiếu 96 ảnh (-38.4%)** |
-| **10.000 VND** | `010000` | Polymer | 250 | 100% | Đủ mẫu chuẩn |
-| **20.000 VND** | `020000` | Polymer | **154** | **61.6%** | **Thiếu 96 ảnh (-38.4%)** |
-| **50.000 VND** | `050000` | Polymer | **154** | **61.6%** | **Thiếu 96 ảnh (-38.4%)** |
-| **100.000 VND** | `100000` | Polymer | 250 | 100% | Đủ mẫu chuẩn |
-| **200.000 VND** | `200000` | Polymer | 250 | 100% | Đủ mẫu chuẩn |
-| **500.000 VND** | `500000` | Polymer | 250 | 100% | Đủ mẫu chuẩn |
-
-> **Ghi chú nghiệm thu Thành viên A**: Ba lớp `5.000`, `20.000`, và `50.000` chỉ có 154 ảnh/lớp. Pipeline đã ghi nhận rõ rệt sự mất cân bằng này. Trong quá trình training (Thành viên B), khuyến nghị áp dụng **Class Weights** hoặc **Focal Loss** để cân bằng trọng số giữa các lớp.
+Nội dung file `data.yaml`:
+```yaml
+path: C:/Users/ndt06/Desktop/VNDCash/data/processed/yolo_dataset
+train: images/train
+val: images/val
+test: images/test
+nc: 9
+names:
+  - '1000'
+  - '10000'
+  - '100000'
+  - '2000'
+  - '20000'
+  - '200000'
+  - '5000'
+  - '50000'
+  - '500000'
+```
 
 ---
 
-## 3. Cấu trúc Metadata (`data/metadata/metadata.csv`)
+## 7. Hướng dẫn Lệnh kiểm thử & Tái lập (Reproducibility)
 
-File metadata được sinh tự động bằng script `scripts/build_metadata.py` với schema nhất quán:
+Để kiểm tra và tái lập toàn bộ pipeline từ đầu:
 
-| Tên cột | Kiểu dữ liệu | Ý nghĩa | Ví dụ |
-| :--- | :--- | :--- | :--- |
-| `image_id` | String | Mã định danh duy nhất của ảnh | `1000_0000` |
-| `filename` | String | Tên file vật lý | `001000_0.png` |
-| `rel_path` | String | Đường dẫn tương đối từ gốc project | `data/raw/001000/001000_0.png` |
-| `denomination`| String/Int | Mệnh giá tiền | `1000` |
-| `label_idx` | Integer | Chỉ số lớp dùng trong classification head (0 - 8) | `0` |
-| `material` | String | Chất liệu tờ tiền (`cotton` hoặc `polymer`) | `cotton` |
-| `note_id` | String | **Mã tờ tiền vật lý** (phục vụ Grouped Split) | `NOTE_1000_000` |
-| `width` | Integer | Chiều rộng ảnh (pixels) | `192` |
-| `height` | Integer | Chiều cao ảnh (pixels) | `144` |
-| `channels` | Integer | Số kênh màu | `3` |
-| `color_mode`| String | Hệ màu | `RGB` |
-| `aspect_ratio`| Float | Tỷ lệ khung hình (width / height) | `1.333` |
-| `file_size_bytes` | Integer | Kích thước file (bytes) | `52550` |
-| `md5_hash` | String | Mã băm MD5 kiểm tra trùng lặp | `9b61b958bf3295f3...` |
-| `is_valid` | Boolean | Cờ trạng thái hợp lệ | `True` |
-
----
-
-## 4. Quản lý `note_id` & Giao thức chia tập chống rò rỉ dữ liệu (Anti-Leakage Split)
-
-### 4.1. Nguy cơ rò rỉ dữ liệu (Data Leakage)
-Nếu thực hiện random split ngẫu nhiên theo từng ảnh đơn lẻ, các ảnh chụp cùng một tờ tiền (cùng số serial, cùng độ nhàu nát hoặc nền chụp) sẽ xuất hiện đồng thời ở cả tập Train và Test. Điều này khiến mô hình "học vẹt" đặc trưng riêng của tờ tiền thay vì học đặc trưng tổng quát của mệnh giá, dẫn đến độ chính xác ảo (over-optimistic test metrics).
-
-### 4.2. Giải pháp: Stratified Grouped Split theo `note_id`
-- Gom cụm các ảnh chụp cùng một tờ tiền vào chung một `note_id`. Toàn bộ bộ dữ liệu gồm **198 tờ tiền độc lập**.
-- Thuật toán `stratified_group_split`:
-  1. Phân nhóm theo mệnh giá (`denomination`).
-  2. Với mỗi mệnh giá, xáo trộn danh sách `note_id` với seed cố định (`42`).
-  3. Phân bổ nguyên vẹn từng `note_id` vào tập Train, Val, hoặc Test.
-  4. Ánh xạ split ngược lại toàn bộ ảnh thuộc tờ tiền đó.
-
-### 4.3. Kết quả phân chia tập dữ liệu (`data/metadata/splits.csv`)
-- **Tập Train**: **1.362 ảnh** (69.42%) | 138 tờ tiền
-- **Tập Val**: **300 ảnh** (15.29%) | 30 tờ tiền
-- **Tập Test**: **300 ảnh** (15.29%) | 30 tờ tiền
-- **Tổng cộng**: **1.962 ảnh** (100.00%) | 198 tờ tiền
-
-#### Chi tiết phân bổ theo mệnh giá:
-| Mệnh giá | Train (ảnh / notes) | Val (ảnh / notes) | Test (ảnh / notes) | Tổng ảnh | Tỷ lệ thực tế (Train/Val/Test) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **1.000** | 170 / 17 | 40 / 4 | 40 / 4 | 250 | 68.0% / 16.0% / 16.0% |
-| **2.000** | 170 / 17 | 40 / 4 | 40 / 4 | 250 | 68.0% / 16.0% / 16.0% |
-| **5.000** | 114 / 12 | 20 / 2 | 20 / 2 | 154 | 74.0% / 13.0% / 13.0% |
-| **10.000** | 170 / 17 | 40 / 4 | 40 / 4 | 250 | 68.0% / 16.0% / 16.0% |
-| **20.000** | 114 / 12 | 20 / 2 | 20 / 2 | 154 | 74.0% / 13.0% / 13.0% |
-| **50.000** | 114 / 12 | 20 / 2 | 20 / 2 | 154 | 74.0% / 13.0% / 13.0% |
-| **100.000** | 170 / 17 | 40 / 4 | 40 / 4 | 250 | 68.0% / 16.0% / 16.0% |
-| **200.000** | 170 / 17 | 40 / 4 | 40 / 4 | 250 | 68.0% / 16.0% / 16.0% |
-| **500.000** | 170 / 17 | 40 / 4 | 40 / 4 | 250 | 68.0% / 16.0% / 16.0% |
-
-> **Kết quả nghiệm thu chống rò rỉ**:
-> - Giao giữa Train & Val: $\emptyset$ (0 notes, 0 hash trùng)
-> - Giao giữa Train & Test: $\emptyset$ (0 notes, 0 hash trùng)
-> - Giao giữa Val & Test: $\emptyset$ (0 notes, 0 hash trùng)  
-> **-> Đạt 100% tiêu chí Zero Data Leakage.**
-
----
-
-## 5. Quy tắc Tiền xử lý & Tăng cường dữ liệu
-
-### 5.1. Tiền xử lý chuẩn (Preprocessing)
-- **Kích thước đầu vào chuẩn**: `224 x 224 x 3` (phù hợp với các backbone CNN: Baseline CNN, MobileNetV2, ResNet18).
-- **Chuẩn hóa điểm ảnh (ImageNet Normalization)**:
-  - Mean: `[0.485, 0.456, 0.406]`
-  - Std: `[0.229, 0.224, 0.225]`
-
-### 5.2. Tăng cường dữ liệu (Data Augmentation)
-> [!IMPORTANT]
-> **Quy tắc bất biến**: Data Augmentation **CHỈ** được áp dụng cho tập `Train`. Tuyệt đối không áp dụng cho `Val` và `Test`.
-
-Các phép biến đổi tập Train (trong `src/data/augmentation.py`):
-1. **Lật ngang ngẫu nhiên (`RandomHorizontalFlip`, $p=0.5$)**: Mô phỏng việc người dùng lật chiều tờ tiền.
-2. **Xoay ngẫu nhiên (`RandomRotation`, $\pm 15^\circ$)**: Mô phỏng góc nghiêng tự nhiên khi cầm tiền trước camera.
-3. **Biến đổi ánh sáng/màu sắc (`ColorJitter`, brightness=0.2, contrast=0.2, saturation=0.2)**: Mô phỏng điều kiện ánh sáng bóng đèn, ánh sáng ban ngày và độ cũ/mới của tờ tiền.
-4. **Co giãn & dịch chuyển ngẫu nhiên (`RandomAffine`, scale 0.9 - 1.1, translate 5%)**: Mô phỏng khoảng cách xa gần từ camera tới tờ tiền.
-5. **Làm mờ Gauss (`GaussianBlur`, $p=0.2$)**: Mô phỏng rung tay khi chụp hoặc camera lấy nét chưa chuẩn.
-
----
-
-## 6. Hướng dẫn sử dụng & Tái lập (CLI Commands)
-
-1. **Kiểm tra và audit dataset**:
-   ```bash
-   python scripts/inspect_dataset.py
-   ```
-2. **Xây dựng bảng metadata chuẩn**:
+1. **Sinh lại metadata**:
    ```bash
    python scripts/build_metadata.py
    ```
-3. **Phân chia tập Train/Val/Test có kiểm soát note_id**:
+2. **Chia tập dữ liệu và xuất cây thư mục Ultralytics**:
    ```bash
    python scripts/create_split.py
    ```
-4. **Chạy bộ kiểm thử tự động (Unit Tests)**:
+3. **Kiểm toán và xuất báo cáo JSON**:
    ```bash
-   python -m pytest tests/test_dataset.py tests/test_preprocessing.py tests/test_split.py -v
+   python scripts/inspect_dataset.py
    ```
-5. **Nạp DataLoader trong code huấn luyện (Dành cho Thành viên B)**:
-   ```python
-   from src.data.dataset import get_dataloaders
-
-   train_loader, val_loader, test_loader = get_dataloaders(
-       config_path="configs/data.yaml",
-       batch_size=32,
-       num_workers=0
-   )
+4. **Chạy toàn bộ unit tests kiểm định Zero Leakage**:
+   ```bash
+   pytest tests/test_data_integrity.py -v
+   ```
+5. **Thực thi và xem trực quan hóa Bounding Box**:
+   ```bash
+   jupyter nbconvert --to notebook --execute --inplace notebooks/01_bbox_exploration.ipynb
    ```
