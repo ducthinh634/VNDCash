@@ -13,12 +13,16 @@
 - Ban đầu bài toán phân loại đơn mẫu (Classification) chỉ nhận diện 1 tờ tiền trên nền tĩnh, không đáp ứng được thực tế khi người dùng thanh toán hay quét một xấp tiền gồm nhiều mệnh giá cùng lúc.
 - Do đó, dự án nâng cấp toàn diện sang mô hình **YOLOv11 Object Detection**, cho phép định vị (Bounding Box) và phân loại đồng thời nhiều tờ tiền thuộc các mệnh giá khác nhau trong một khung hình duy nhất.
 
-### 1.2. Nguồn gốc dữ liệu
-Bộ dữ liệu được tích hợp và chuẩn hóa từ Roboflow Universe (tác giả Anng - `Vietnamese Currency.v10-v4.yolov11`):
-- **Tổng số ảnh multi-note được chọn lọc**: **1.898 ảnh** lưu trữ tại `data/raw/multi_note/images/` và `data/raw/multi_note/labels/`.
-- **Tổng số Bounding Box chuẩn hóa**: **6.731 nhãn tờ tiền**.
-- **Số lớp nhận diện (nc = 9)**: Đầy đủ 9 mệnh giá tiền giấy Việt Nam lưu hành:
-  `['1000', '10000', '100000', '2000', '20000', '200000', '5000', '50000', '500000']`.
+### 1.2. Nguồn gốc dữ liệu & Trích dẫn bản quyền (Data Source & Attribution)
+- **Nguồn dữ liệu chính**: Bộ dữ liệu của tác giả **Anng** trên nền tảng **[Roboflow Universe]** với định danh **Vietnamese Currency.v10-v4.yolov11** (Liên kết truy cập: [https://universe.roboflow.com/anng-ismb4/vietnamese-currency-lgi9i-sl5x1](https://universe.roboflow.com/anng-ismb4/vietnamese-currency-lgi9i-sl5x1)).
+- **Quy mô tập nguồn**: Cung cấp gần 2.400 hình ảnh gốc độc lập (và hơn 3.800 hình ảnh sau khi áp dụng các phép biến đổi tăng cường) với nhiều góc chụp đa dạng khác nhau của các mệnh giá tiền giấy Việt Nam (chụp nghiêng, xoay góc, xếp chồng, che khuất một phần, gấp nếp, nhiều mệnh giá trong một khung cảnh).
+- **Giấy phép bản quyền (License)**: Creative Commons Attribution 4.0 International (CC BY 4.0).
+- **Trích lọc & Chuẩn hóa cho VNDCash (Stack 01)**:
+  - **Tập ảnh đa tờ tiền thực tế (Multi-Note)**: Chọn lọc **1.898 ảnh** đa mệnh giá thực tế ($\ge 2$ tờ tiền/ảnh) lưu trữ tại `data/raw/multi_note/images/` và `data/raw/multi_note/labels/`.
+  - **Tổng số Bounding Box chuẩn hóa**: **6.731 nhãn tờ tiền**.
+  - **Số lớp nhận diện (nc = 9)**: Đầy đủ 9 mệnh giá tiền giấy Việt Nam lưu hành:
+    `['1000', '10000', '100000', '2000', '20000', '200000', '5000', '50000', '500000']`.
+  - **Tập dữ liệu đơn v1 (Legacy Benchmark)**: Được lưu giữ tại `data/raw/001000...500000` phục vụ đối chứng lịch sử.
 
 ---
 
